@@ -9,7 +9,8 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+from candb import django_configs as candb_django_configs
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,7 +21,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a8jd204z*je2towourus@=y3vht5ferov$@+*o)=m=3sv_jy1^'
+ENV_SECRET = os.getenv("DJANGO_CANNED_SECRET")
+if ENV_SECRET is None:
+    raise ValueError("DJANGO_CANNED_SECRET environment variable not set. Please specify the correct secret key, or reinitialise encrypted data and create a new secret key using django.core.management.utils.get_random_secret_key")
+SECRET_KEY = 'django-insecure-' + ENV_SECRET
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,7 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Canned.apps.CannedConfig',
+    "capi.apps.CapiConfig",
+    "candb.apps.CandbConfig",
+    "webui.apps.WebuiConfig"
 ]
 
 MIDDLEWARE = [
@@ -75,12 +81,7 @@ WSGI_APPLICATION = 'NewCanned.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DATABASES = candb_django_configs.DATABASES
 
 
 # Password validation
