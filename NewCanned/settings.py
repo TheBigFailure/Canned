@@ -9,9 +9,10 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-from candb import django_configs as candb_django_configs
 import os
 from pathlib import Path
+from datetime import timedelta, datetime
+from zoneinfo import ZoneInfo
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,15 +27,23 @@ if ENV_SECRET is None:
     raise ValueError("DJANGO_CANNED_SECRET environment variable not set. Please specify the correct secret key, or reinitialise encrypted data and create a new secret key using django.core.management.utils.get_random_secret_key")
 SECRET_KEY = 'django-insecure-' + ENV_SECRET
 
+try:
+    with open(BASE_DIR / "secrets" / "pepper.secret", 'rb') as _f:
+        SECRET_PEPPER: bytes = _f.read()
+    del _f
+except FileNotFoundError:
+    if input("WARNING: pepper key file not found. Continue (not recommended)? Y/[N] >> ").casefold() != 'y':
+        exit(1)
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
-
 INSTALLED_APPS = [
+    "internal.apps.InternalConfig",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,8 +52,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     "capi.apps.CapiConfig",
     "candb.apps.CandbConfig",
-    "webui.apps.WebuiConfig"
+    "webui.apps.WebuiConfig",
+    "canlog.apps.CanlogConfig",
+    "rest_framework",
+    'rest_framework.authtoken',
+    'dj_rest_auth'
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -81,8 +95,17 @@ WSGI_APPLICATION = 'NewCanned.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = candb_django_configs.DATABASES
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        "OPTIONS": {
+            "service": "candb",
+            "passfile": BASE_DIR / "secrets" / ".pgpass",
+        },
+    }
+}
 
+AUTH_USER_MODEL = "candb.Profile"  # Override the default user model to use the Profile model
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -92,13 +115,16 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {
+            "min_length": 12,
+        },
     },
 ]
 
@@ -106,9 +132,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'en-au'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Australia/NSW'
+TZ_INFO = ZoneInfo(TIME_ZONE)
 
 USE_I18N = True
 
@@ -120,7 +147,42 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+PASSWORD_HASHERS = [
+    "internal.security.PepperedHasher",
+]
+SESSION_EXPIRE_AT_BROWSER_CLOSE: bool = True
+SESSION_EXPIRE_SECONDS: int = 86400
+SESSION_TIMEOUT_REDIRECT = '/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# https://medium.com/@michal.drozdze/django-rest-apis-with-jwt-authentication-using-dj-rest-auth-781a536dfb49
+
+
+# djangorestframework-simplejwt
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+}
+
+# dj-rest-auth
+REST_AUTH = {
+    "USE_JWT": True,
+    "JWT_AUTH_COOKIE": "_auth",  # Name of access token cookie
+    "JWT_AUTH_REFRESH_COOKIE": "_refresh",  # Name of refresh token cookie
+    "JWT_AUTH_HTTPONLY": False,  # Makes sure refresh token is sent
+}
+
