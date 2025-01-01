@@ -5,6 +5,7 @@ from . import apis
 ROUTER = routers.DefaultRouter()
 ROUTER.register(r'users', apis.ProfileViewSet)
 ROUTER.register(r'orders', apis.OrderViewSet)
+ROUTER.register(r'products', apis.ProductViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.

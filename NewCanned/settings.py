@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     "canlog.apps.CanlogConfig",
     "rest_framework",
     'rest_framework.authtoken',
-    'dj_rest_auth'
+    'dj_rest_auth',
+    "cachalot"
 ]
 
 
@@ -185,4 +186,7 @@ REST_AUTH = {
     "JWT_AUTH_REFRESH_COOKIE": "_refresh",  # Name of refresh token cookie
     "JWT_AUTH_HTTPONLY": False,  # Makes sure refresh token is sent
 }
+
+
+# CACHALOT_ENABLED = True  # Enable caching. Please see https://django-cachalot.readthedocs.io/en/latest/limits.html#limits. It may make sense to disable caching in some circumstances.
 

@@ -10,3 +10,9 @@ class OrderSerializer(rest_serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'orderTime', 'totalCost', 'notes', 'user']
+
+
+class ProductSerializer(rest_serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'description', 'price', 'image', 'tags']

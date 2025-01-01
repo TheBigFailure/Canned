@@ -14,4 +14,4 @@ class StandardResponse:
             super().__init__(status=401, reason=reason)
 
 
-
+type CompiledPermissions = set[str]

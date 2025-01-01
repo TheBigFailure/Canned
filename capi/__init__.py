@@ -5,5 +5,6 @@ from canlog.common import (Event, LogType)
 from functools import wraps
 from django.http import HttpRequest, HttpResponse
 from rest_framework import (serializers as rest_serializers, permissions)
+from rest_framework.request import Request as RestRequest
 from django.db.models import QuerySet
 from json import JSONDecoder, JSONEncoder

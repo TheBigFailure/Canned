@@ -1,5 +1,7 @@
 from capi import *
 from capi import serializers as modelSerializers
+from capi.security import standardViewsetWrapper
+from capi import config as cfg
 from candb.models import Profile, Order, OrderLine, Product
 from capi.security import apiMethod
 from capi.common import StandardResponse
@@ -20,13 +22,41 @@ class ProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
 
 
+class ProductViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows products to be viewed or edited.
+    """
+    queryset = Product.objects.all().order_by('name')
+    serializer_class = modelSerializers.ProductSerializer
+
+    permission_classes = [permissions.IsAuthenticated]
+
+
 class OrderViewSet(viewsets.GenericViewSet, generics.RetrieveUpdateDestroyAPIView, generics.CreateAPIView):
     """
     API endpoint that allows orders to be viewed or edited.
     """
-    def get_queryset(self: Self) -> QuerySet:
+    @staticmethod
+    @standardViewsetWrapper(actionForSelf=cfg.OrderAPI.VIEW_SELF_ORDER, actionForAny=cfg.OrderAPI.VIEW_ANY_ORDER,
+                            logEvents={Event.API_REQUEST,}, logMessage=True)
+    def retrieve(actionAny: bool, request: RestRequest, *args, **kwargs) -> QuerySet:
+        # Note: actionAny is handled by the wrapper.
+        querySet = None
+        if actionAny:
+            querySet = Order.objects.all()
+        else:
+            querySet = Order.objects.filter(user=request.user)
+        data = modelSerializers.OrderSerializer(querySet, many=True).data
+        return Response(data=data)
 
-        return Order.objects.all().order_by('-orderTime')
+    @staticmethod
+    @standardViewsetWrapper(actionForSelf=cfg.OrderAPI.DELETE_SELF_ORDER, actionForAny=cfg.OrderAPI.DELETE_ANY_ORDER,
+                            logEvents={Event.API_REQUEST,}, logMessage=True)
+    def destroy(actionAny: bool, request: RestRequest, *args, **kwargs):
+        # Note: actionAny is handled by the wrapper.
+        instance = Order.objects.get(id=kwargs["pk"])
+        instance.cancel()
+        return Response(status=204)
 
     queryset = Order.objects.all().order_by('-orderTime')
     serializer_class = modelSerializers.OrderSerializer

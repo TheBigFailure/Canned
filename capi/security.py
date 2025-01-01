@@ -1,6 +1,10 @@
 from capi import *
 from capi.common import StandardResponse
+from capi import common as _common
+from capi import config as cfg
 from canlog.models import Logs
+from django.db import transaction
+
 
 
 def apiMethod(allowMethods: set[str], requireLogin: bool = True, expectPermissions: set[str] = None,
@@ -38,3 +42,35 @@ def apiMethod(allowMethods: set[str], requireLogin: bool = True, expectPermissio
 
         return wrapper
     return decorator
+
+
+
+def standardViewsetWrapper(actionForSelf: _common.CompiledPermissions, actionForAny: _common.CompiledPermissions,
+                           logEvents: set[Event] = None, logMessage: str | bool = True) -> Callable:
+    """
+    Decorator for standard viewsets to enforce security and logging.
+    :param actionForSelf: The permissions required for the user to perform actions on themselves
+    :param actionForAny: The permissions required for the user to perform actions on any user
+    :param logEvents: The events that must occur to write a log
+    :param logMessage: The message to log. Use True for auto.
+    :return: The decorator
+    """
+    def partyDecorations(func: Callable) -> Callable:
+        @wraps(func)
+        def wrapper(request: RestRequest, *args: Any, **kwargs: Any) -> Any:
+            nonlocal logMessage
+            if Event.API_REQUEST in logEvents:
+                Logs.writeRequest(request=request, logType=LogType.Info, logMessage=logMessage,  # where logMessage is True, autohandled by Logs.writeRequest
+                                  logUser=request.user if not (
+                                              request.user.is_anonymous or not request.user.is_authenticated) else None,
+                                  event=Event.API_REQUEST, origin=f"{func.__module__}.{func.__name__}", severity=4)
+            # Figure out why user cache does not update
+            if request.user.is_anonymous:
+                return StandardResponse.Unauthorised()
+            if cfg.CommonAPI.userHasPerms(request.user, actionForAny):
+                return func(True, request, *args, **kwargs)
+            if cfg.CommonAPI.userHasPerms(request.user, actionForSelf):
+                return func(False, request, *args, **kwargs)
+            return StandardResponse.Unauthorised()
+        return wrapper
+    return partyDecorations

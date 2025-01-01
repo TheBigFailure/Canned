@@ -1,0 +1,39 @@
+{
+  "1": [
+    [
+      [
+        "__datetime__",
+        "2024-11-23T21:31:08.809262+11:00"
+      ],
+      [
+        "__datetime__",
+        "2024-11-26T21:31:08.809267+11:00"
+      ]
+    ],
+    {
+      "infinite": false,
+      "available": true,
+      "physicalStock": 15,
+      "reservedStock": 0,
+      "useModelStock": false
+    }
+  ],
+  "3": [
+    [
+      5,
+      7
+    ],
+    {
+      "available": true,
+      "physicalStock": 3,
+      "reservedStock": 2
+    }
+  ],
+  "4": [
+    "default",
+    {
+      "available": true,
+      "useModelStock": true
+    }
+  ]
+}

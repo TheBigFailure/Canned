@@ -1,3 +1,16 @@
+from requests import get
+from time import sleep
+from datetime import datetime
+HEADERS = {"Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzI4Mzg1MTgyLCJpYXQiOjE3MjgzODE1ODIsImp0aSI6IjFkZTIyN2YxMmUwNTQyMDc5NGJkMjYxYzNiZjg0N2JjIiwidXNlcl9pZCI6MX0.HKVYClgXoqbTSk6dEIkbbDmbjRC_7oVzXbCUz25jnmg"}
+print(datetime.now())
+while True:
+    if get("http://localhost:8000/api/v1/orders", headers=HEADERS).status_code == 200:
+        print("Broken at ", datetime.now())
+        break
+    sleep(1)
+
+
+quit()
 from datetime import datetime, date
 from time import perf_counter, struct_time
 import json

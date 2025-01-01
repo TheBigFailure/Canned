@@ -2,7 +2,8 @@ from time import sleep
 from datetime import datetime, date, timedelta, timezone
 from dataclasses import dataclass
 from os import PathLike
-from typing import (Union, TypeVar, Any, Generic, Self, NoReturn,)
+from decimal import Decimal
+from typing import (Union, TypeVar, Any, Generic, Self, NoReturn, Type)
 from collections.abc import (Callable, Iterable)
 from types import SimpleNamespace, ModuleType
 import sys
@@ -14,12 +15,14 @@ import warnings
 import django
 from django.db import transaction
 import traceback
+from deprecation import deprecated
 
 
 from contextlib import contextmanager
 
 
 PathType = Union[str, bytes, PathLike]
+T = TypeVar('T', bound='Parent')
 
 
 @dataclass
